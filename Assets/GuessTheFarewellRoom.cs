@@ -21,6 +21,7 @@ public class GuessTheFarewellRoom : MonoBehaviour {
    public TextMesh CPDisplay;
    public TextMesh NumberDisplay;
    public Renderer MainScreen;
+   public Material[] Rooms;
 
    string GeneratedCheckpoint;
    int GeneratedNumber;
@@ -61,6 +62,7 @@ public class GuessTheFarewellRoom : MonoBehaviour {
     {
         CPChosenRaw--;
         CPChosen = ((CPChosenRaw % 8) + 8) % 8;
+        LeftCPButton.AddInteractionPunch();
         GetComponent<KMAudio>().PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
         CPDisplay.text = CPNames[CPChosen];
     }
@@ -69,6 +71,7 @@ public class GuessTheFarewellRoom : MonoBehaviour {
     {
         CPChosenRaw++;
         CPChosen = ((CPChosenRaw % 8) + 8) % 8;
+        RightCPButton.AddInteractionPunch();
         GetComponent<KMAudio>().PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
         CPDisplay.text = CPNames[CPChosen];
     }
@@ -91,6 +94,7 @@ public class GuessTheFarewellRoom : MonoBehaviour {
             NumberChosen = numberChosen.ToString("D2");
         }
         NumberDisplay.text = NumberChosen;
+        LeftNumberButton.AddInteractionPunch();
         GetComponent<KMAudio>().PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
     }
 
@@ -112,11 +116,12 @@ public class GuessTheFarewellRoom : MonoBehaviour {
             NumberChosen = numberChosen.ToString("D2");
         }
         NumberDisplay.text = NumberChosen;
+        RightNumberButton.AddInteractionPunch();
         GetComponent<KMAudio>().PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, transform);
     }
 
     void OnDestroy () { //Shit you need to do when the bomb ends
-        MainScreen.material.mainTexture = Resources.Load<Texture2D>("RectangularShadow");
+        MainScreen.GetComponent<MeshRenderer>().material = Rooms[122];
         Needy.OnPass();
     }
 
@@ -130,24 +135,24 @@ public class GuessTheFarewellRoom : MonoBehaviour {
    }
 
    protected void OnNeedyDeactivation () { //Shit that happens when a needy turns off.
-        MainScreen.material.mainTexture = Resources.Load<Texture2D>("RectangularShadow");
+        MainScreen.GetComponent<MeshRenderer>().material = Rooms[122];
     }
 
     protected void OnTimerExpired()
     { //Shit that happens when a needy turns off due to running out of time.
-        MainScreen.material.mainTexture = Resources.Load<Texture2D>("RectangularShadow");
+        MainScreen.GetComponent<MeshRenderer>().material = Rooms[122];
         NumberChosen = numberChosen.ToString("D2");
         UserAnswer = CPNames[CPChosen] + "-" + NumberChosen;
         Debug.LogFormat("[Guess The Farewell Room #{0}] User Answer: {1}", ModuleId, UserAnswer);
         if (UserAnswer == GeneratedRoomFormat)
-        {
-            Needy.OnPass();
+        {            
             Debug.LogFormat("[Guess The Farewell Room #{0}] User guessed correctly. Module Pass.", ModuleId);
+            Needy.OnPass();
         }
         else
-        {
+        {            
+            Debug.LogFormat("[Guess The Farewell Room #{0}] User guessed incorrectly. The room was {1}. Strike.", ModuleId, GeneratedRoomFormat);
             Strike();
-            Debug.LogFormat("[Guess The Farewell Room #{0}] User guessed incorrectly. The room was {1}.", ModuleId, GeneratedRoomFormat);
         }
     }
 
@@ -218,8 +223,23 @@ public class GuessTheFarewellRoom : MonoBehaviour {
 
     void ShowRoomImage(string imageName)
     {
-        Texture2D tex = Resources.Load<Texture2D>("Farewell Rooms/" + imageName);
-        MainScreen.material.mainTexture = tex;
+        int i = 0;
+        while (true)
+        {
+            string matName = Rooms[i].name;
+            if (imageName == matName)
+            {
+                Material tempMaterial = new Material(Rooms[i]);
+                tempMaterial.shader = Shader.Find("KT/Blend Unlit");
+
+                MainScreen.GetComponent<MeshRenderer>().material = tempMaterial;
+                break;
+            }
+            else
+            {
+                i++;
+            }
+        }
     }
 
 #pragma warning disable 414
